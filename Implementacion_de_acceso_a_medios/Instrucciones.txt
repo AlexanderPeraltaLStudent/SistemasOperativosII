@@ -1,0 +1,54 @@
+$ErrorActionPreference="Stop"
+function Ensure-Dir($p){New-Item -ItemType Directory -Force -Path $p | Out-Null}
+function Write-Text($path,$text){$d=[System.IO.Path]::GetDirectoryName($path); if($d){Ensure-Dir $d}; $text | Set-Content -LiteralPath $path -Encoding utf8}
+function Append-Text($path,$text){$d=[System.IO.Path]::GetDirectoryName($path); if($d){Ensure-Dir $d}; $text | Add-Content -LiteralPath $path -Encoding utf8}
+
+Ensure-Dir "SIGET/Documentacion"
+Ensure-Dir "SIGET/Modulos/RecoleccionDatos/InterfacesSensores"
+Ensure-Dir "SIGET/Modulos/Analisis/ModelosPrediccion"
+Ensure-Dir "SIGET/Modulos/Control/SemaforosInteligentes"
+Ensure-Dir "SIGET/Modulos/Reportes/InformesCiudadanos"
+Ensure-Dir "SIGET/Configuracion"
+
+Write-Text "SIGET/Documentacion/AnalisisRequerimientos.txt" "Requisitos del SIGET para la ciudad."
+Write-Text "SIGET/Documentacion/DisenoArquitectura.txt" "Arquitectura modular: RecoleccionDatos, Analisis, Control, Reportes."
+Write-Text "SIGET/Modulos/RecoleccionDatos/DescripcionModulo.txt" "Recoleccion desde sensores IoT (flujo, velocidad, camaras)."
+Write-Text "SIGET/Modulos/Analisis/DescripcionModulo.txt" "Analitica, KPIs, prediccion de congestion."
+Write-Text "SIGET/Modulos/Control/DescripcionModulo.txt" "Orquestacion de semaforos, desvios y alertas."
+Write-Text "SIGET/Modulos/Reportes/DescripcionModulo.txt" "Reportes para ciudadania y autoridades."
+Write-Text "SIGET/Configuracion/base_datos.cfg" "DB_HOST=localhost`nDB_NAME=siget"
+Write-Text "SIGET/Configuracion/red.cfg" "MQTT_BROKER=broker.local`nTOPIC=siget/#"
+
+Ensure-Dir "SIGET_Datos/Sensores/Velocidad"
+Ensure-Dir "SIGET_Datos/Sensores/FlujoVehicular"
+Ensure-Dir "SIGET_Datos/Semaforos"
+Ensure-Dir "SIGET_Datos/Reportes"
+Ensure-Dir "SIGET_Datos/Logs"
+
+Write-Text "SIGET_Datos/Sensores/Velocidad/sensor_V001.log" "2025-10-19T10:00Z;AV80;55kmh"
+Write-Text "SIGET_Datos/Sensores/Velocidad/sensor_V002.log" "2025-10-19T10:01Z;AV80;58kmh"
+Write-Text "SIGET_Datos/Sensores/FlujoVehicular/sensor_F001.log" "2025-10-19T10:00Z;Carril1;23veh/min"
+Write-Text "SIGET_Datos/Sensores/FlujoVehicular/sensor_F002.log" "2025-10-19T10:01Z;Carril2;19veh/min"
+Write-Text "SIGET_Datos/Semaforos/estado_semaforo_1.txt" "ID=1;CRUCE=CL80xKR50;ESTADO=VERDE"
+Write-Text "SIGET_Datos/Semaforos/estado_semaforo_2.txt" "ID=2;CRUCE=CL81xKR52;ESTADO=ROJO"
+
+Write-Text "SIGET_Datos/Reportes/reporte_diario_2025_10_20.csv" "fecha,via,velocidad_promedio,flujo"
+Append-Text "SIGET_Datos/Reportes/reporte_diario_2025_10_20.csv" "2025-10-20,AV80,52,1320"
+Write-Text "SIGET_Datos/Reportes/reporte_semanal_2025_10.csv" "semana,via,velocidad_promedio,flujo"
+Append-Text "SIGET_Datos/Reportes/reporte_semanal_2025_10.csv" "2025-10,AV80,51,9100"
+
+Write-Text "SIGET_Datos/Logs/errores.log" "2025-10-19 10:02:10 ERROR Sensor V003 sin respuesta"
+Write-Text "SIGET_Datos/Logs/eventos_sistema.log" "2025-10-19 10:02:30 INFO Reconfiguracion semaforos distrito norte"
+
+attrib +r "SIGET/Documentacion/DisenoArquitectura.txt"
+attrib +h "SIGET/Configuracion/red.cfg"
+
+dir -Recurse "SIGET" | Out-Host
+dir -Recurse "SIGET_Datos" | Out-Host
+tree "SIGET" /f | Out-Host
+tree "SIGET_Datos" /f | Out-Host
+
+try { icacls "SIGET/Documentacion/AnalisisRequerimientos.txt" /grant "BUILTIN\Administrators:(R)" | Out-Host } catch {}
+try { icacls "SIGET/Documentacion/AnalisisRequerimientos.txt" /grant "$env:USERNAME:(R)" | Out-Host } catch {}
+
+powershell -NoProfile -Command "Compress-Archive -Path SIGET,SIGET_Datos -DestinationPath estructura_siget.zip -Force"

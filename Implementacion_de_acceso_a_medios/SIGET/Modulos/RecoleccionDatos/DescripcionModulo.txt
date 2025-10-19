@@ -1,0 +1,1 @@
+﻿Recoleccion desde sensores IoT (flujo, velocidad, camaras).
